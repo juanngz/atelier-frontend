@@ -9,7 +9,6 @@ export const PRODUCTS: Product[] = [
   {
     id: '1',
     name: 'Minimalist Trench Coat',
-    sku: 'AT-TC-2024-BE',
     price: 1240.00,
     stock: 42,
     category: 'Ready-to-wear • Seasonal',
@@ -18,7 +17,6 @@ export const PRODUCTS: Product[] = [
   {
     id: '2',
     name: 'Silk Evening Blouse',
-    sku: 'AT-SB-9932-NY',
     price: 450.00,
     stock: 3,
     category: 'Silk Atelier • Eveningwear',
@@ -27,7 +25,6 @@ export const PRODUCTS: Product[] = [
   {
     id: '3',
     name: 'Architectural Heel',
-    sku: 'AT-FW-8001-BK',
     price: 890.00,
     stock: 18,
     category: 'Footwear • Sculptural',
@@ -36,7 +33,6 @@ export const PRODUCTS: Product[] = [
   {
     id: '4',
     name: 'Cashmere Scarf',
-    sku: 'AT-AC-1044-GR',
     price: 320.00,
     stock: 104,
     category: 'Accessories • Winter',
@@ -45,7 +41,6 @@ export const PRODUCTS: Product[] = [
   {
     id: '5',
     name: 'Organic Cotton Set',
-    sku: 'AT-OC-5521-WH',
     price: 89.00,
     stock: 55,
     category: 'Artisanal • Sustainable',
@@ -54,7 +49,6 @@ export const PRODUCTS: Product[] = [
   {
     id: '6',
     name: 'Hand-Carved Brooch',
-    sku: 'AT-HC-3312-GD',
     price: 45.50,
     stock: 12,
     category: 'Accessories • Handcrafted',
