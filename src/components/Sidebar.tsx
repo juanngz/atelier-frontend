@@ -22,11 +22,11 @@ function cn(...inputs: ClassValue[]) {
 
 export function Sidebar() {
   const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
-    { icon: Package, label: 'Inventory', to: '/inventory' },
-    { icon: CreditCard, label: 'Sales', to: '/sales' },
-    { icon: BarChart3, label: 'Analytics', to: '/analytics' },
-    { icon: Settings, label: 'Settings', to: '/settings' },
+    { icon: LayoutDashboard, label: 'Panel', to: '/' },
+    { icon: Package, label: 'Inventario', to: '/inventory' },
+    { icon: CreditCard, label: 'Ventas', to: '/sales' },
+    { icon: BarChart3, label: 'Analíticas', to: '/analytics' },
+    { icon: Settings, label: 'Ajustes', to: '/settings' },
   ];
 
   return (
@@ -37,7 +37,7 @@ export function Sidebar() {
         </div>
         <div>
           <h1 className="text-2xl font-semibold tracking-tighter text-slate-900 dark:text-slate-100">Atelier</h1>
-          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Store Management</p>
+          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Gestión de Tienda</p>
         </div>
       </div>
 

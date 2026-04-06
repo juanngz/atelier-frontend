@@ -69,19 +69,19 @@ export function Dashboard() {
   if (error || !data) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <p className="text-red-500 text-sm">{error || 'No data'}</p>
+        <p className="text-red-500 text-sm">{error || 'Sin datos'}</p>
         <button
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-blue-600 text-white rounded-full text-xs font-bold"
         >
-          Retry
+          Reintentar
         </button>
       </div>
     );
   }
 
   const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    new Date(dateStr).toLocaleDateString('es-AR', { month: 'short', day: 'numeric' });
 
   const maxRevenue = Math.max(...data.chartData.map(d => d.revenue), 1);
 
@@ -91,26 +91,26 @@ export function Dashboard() {
       <section>
         <div className="flex flex-wrap gap-20">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Daily Revenue</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Ingreso Diario</span>
             <h2 className="text-[3.5rem] font-semibold leading-none tracking-tighter text-slate-900 dark:text-slate-100">
               ${data.dailyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h2>
             <p className="text-xs text-blue-600 font-semibold mt-2 flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" /> Sales today
+              <TrendingUp className="w-3 h-3" /> Ventas de hoy
             </p>
           </div>
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Transactions Today</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Transacciones Hoy</span>
             <h2 className="text-[3.5rem] font-semibold leading-none tracking-tighter text-slate-900 dark:text-slate-100">{data.todayTxCount}</h2>
             <p className="text-xs text-slate-400 font-semibold mt-2 flex items-center gap-1">
-              Paid transactions
+              Transacciones pagadas
             </p>
           </div>
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Products</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2 block">Productos</span>
             <h2 className="text-[3.5rem] font-semibold leading-none tracking-tighter text-slate-900 dark:text-slate-100">{data.totalProducts}</h2>
             <p className="text-xs text-slate-400 font-semibold mt-2 flex items-center gap-1">
-              <Package className="w-3 h-3" /> In catalog
+              <Package className="w-3 h-3" /> En catálogo
             </p>
           </div>
         </div>
@@ -120,15 +120,15 @@ export function Dashboard() {
       <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-8 border border-slate-200 dark:border-slate-800">
         <div className="flex justify-between items-end mb-10">
           <div>
-            <h3 className="text-xl font-medium tracking-tight mb-1 text-slate-900 dark:text-slate-100">Sales Performance</h3>
-            <p className="text-sm text-slate-500">Last 7 days revenue</p>
+            <h3 className="text-xl font-medium tracking-tight mb-1 text-slate-900 dark:text-slate-100">Rendimiento de Ventas</h3>
+            <p className="text-sm text-slate-500">Ingresos de los últimos 7 días</p>
           </div>
         </div>
         
         <div className="h-64 w-full">
           {data.chartData.every(d => d.revenue === 0) ? (
             <div className="flex items-center justify-center h-full text-slate-400 text-sm">
-              No sales data yet — chart will appear when transactions are recorded
+              Aún no hay datos de ventas — el gráfico aparecerá cuando se registren transacciones
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -143,7 +143,7 @@ export function Dashboard() {
                 <Tooltip 
                   cursor={{ fill: 'transparent' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Ingresos']}
                 />
                 <Bar dataKey="revenue" radius={[12, 12, 0, 0]}>
                   {data.chartData.map((entry, index) => (
@@ -163,17 +163,17 @@ export function Dashboard() {
       {/* Recent Transactions */}
       <section>
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-medium tracking-tight text-slate-900 dark:text-slate-100">Recent Transactions</h3>
+          <h3 className="text-xl font-medium tracking-tight text-slate-900 dark:text-slate-100">Transacciones Recientes</h3>
         </div>
         {data.recentTransactions.length === 0 ? (
-          <p className="text-sm text-slate-400 py-8 text-center">No transactions yet</p>
+          <p className="text-sm text-slate-400 py-8 text-center">Aún no hay transacciones</p>
         ) : (
           <div className="space-y-1">
             <div className="grid grid-cols-12 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              <div className="col-span-4">Product</div>
-              <div className="col-span-3 text-center">Status</div>
-              <div className="col-span-3 text-center">Customer</div>
-              <div className="col-span-2 text-right">Amount</div>
+              <div className="col-span-4">Producto</div>
+              <div className="col-span-3 text-center">Estado</div>
+              <div className="col-span-3 text-center">Cliente</div>
+              <div className="col-span-2 text-right">Monto</div>
             </div>
             {data.recentTransactions.map((tx) => (
               <div key={tx.id} className="grid grid-cols-12 items-center px-6 py-5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">

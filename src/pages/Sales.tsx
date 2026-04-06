@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  ChevronDown, 
+import {
+  ChevronDown,
   Loader2
 } from 'lucide-react';
 import { authenticatedFetch } from '../utils/api';
@@ -150,14 +150,14 @@ export function Sales() {
           onClick={() => { setError(null); setLoading(true); fetchData(); }}
           className="px-4 py-2 bg-blue-600 text-white rounded-full text-xs font-bold"
         >
-          Retry
+          Reintentar
         </button>
       </div>
     );
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString('es-AR', {
       month: 'short', day: 'numeric', year: 'numeric',
     });
   };
@@ -167,14 +167,14 @@ export function Sales() {
       {/* Metric Strip */}
       <div className="flex items-baseline gap-20 mb-16">
         <div>
-          <span className="block text-[0.6875rem] font-bold text-slate-400 uppercase tracking-[0.1em] mb-2">Total Sales Today</span>
+          <span className="block text-[0.6875rem] font-bold text-slate-400 uppercase tracking-[0.1em] mb-2">Ventas Totales Hoy</span>
           <div className="flex items-baseline gap-2">
             <span className="text-[3.5rem] font-semibold tracking-tighter text-slate-900 dark:text-slate-100 leading-none">${stats.totalSalesToday.toLocaleString()}</span>
           </div>
         </div>
         <div className="h-12 w-[1px] bg-slate-200 dark:bg-slate-800 self-center"></div>
         <div>
-          <span className="block text-[0.6875rem] font-bold text-slate-400 uppercase tracking-[0.1em] mb-2">Average Order Value</span>
+          <span className="block text-[0.6875rem] font-bold text-slate-400 uppercase tracking-[0.1em] mb-2">Valor Promedio de Orden</span>
           <div className="flex items-baseline gap-2">
             <span className="text-[3.5rem] font-semibold tracking-tighter text-slate-900 dark:text-slate-100 leading-none">${stats.avgOrderValue.toLocaleString()}</span>
             <span className="text-sm font-semibold text-slate-400">USD</span>
@@ -182,7 +182,7 @@ export function Sales() {
         </div>
         <div className="h-12 w-[1px] bg-slate-200 dark:bg-slate-800 self-center"></div>
         <div>
-          <span className="block text-[0.6875rem] font-bold text-slate-400 uppercase tracking-[0.1em] mb-2">Transactions</span>
+          <span className="block text-[0.6875rem] font-bold text-slate-400 uppercase tracking-[0.1em] mb-2">Transacciones</span>
           <div className="flex items-baseline gap-2">
             <span className="text-[3.5rem] font-semibold tracking-tighter text-slate-900 dark:text-slate-100 leading-none">{stats.totalTransactions}</span>
           </div>
@@ -194,19 +194,19 @@ export function Sales() {
         {/* Left Column: Sales Form */}
         <div className="col-span-12 lg:col-span-4">
           <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-8 sticky top-32 border border-slate-200 dark:border-slate-800">
-            <h2 className="text-xl font-semibold tracking-tight mb-8 text-slate-900 dark:text-slate-100">Record New Sale</h2>
+            <h2 className="text-xl font-semibold tracking-tight mb-8 text-slate-900 dark:text-slate-100">Registrar Venta</h2>
             <form className="space-y-6" onSubmit={e => e.preventDefault()}>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Product Selection</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Selección de Producto</label>
                 <div className="relative">
                   <select
                     className="w-full appearance-none bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
                     value={selectedProductId}
                     onChange={e => handleProductChange(e.target.value)}
                   >
-                    <option value="">Select a product...</option>
+                    <option value="">Seleccionar un producto...</option>
                     {products.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.stock} in stock)</option>
+                      <option key={p.id} value={p.id}>{p.name} ({p.stock} en stock)</option>
                     ))}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
@@ -214,7 +214,7 @@ export function Sales() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Price Sold</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Precio de Venta</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
                     <input
@@ -228,7 +228,7 @@ export function Sales() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Quantity</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Cantidad</label>
                   <input
                     className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
                     type="number"
@@ -239,7 +239,7 @@ export function Sales() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Buyer Name (Optional)</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Nombre del Comprador (Opcional)</label>
                 <input
                   className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
                   placeholder="e.g. Julianne Moore"
@@ -255,7 +255,7 @@ export function Sales() {
                   disabled={submitting || !selectedProductId || !priceSold}
                   onClick={handleSubmit}
                 >
-                  {submitting ? 'Processing...' : 'Complete Transaction'}
+                  {submitting ? 'Procesando...' : 'Completar Transacción'}
                 </button>
               </div>
             </form>
@@ -265,35 +265,34 @@ export function Sales() {
         {/* Right Column: Recent Sales List */}
         <div className="col-span-12 lg:col-span-8">
           <div className="flex justify-between items-center mb-8 px-4">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Recent Transactions</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Transacciones Recientes</h2>
           </div>
           <div className="space-y-3">
             {transactions.length === 0 ? (
-              <p className="text-center text-slate-400 py-12 text-sm">No transactions yet. Record your first sale!</p>
+              <p className="text-center text-slate-400 py-12 text-sm">Aún no hay transacciones. ¡Registrá tu primera venta!</p>
             ) : (
               transactions.map((tx) => (
                 <div key={tx.id} className="group bg-white dark:bg-slate-900 p-6 rounded-2xl transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-5">
                     <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 overflow-hidden">
-                      <img 
-                        src={tx.product.image} 
-                        alt={tx.product.name} 
+                      <img
+                        src={tx.product.image}
+                        alt={tx.product.name}
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
                       />
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{tx.product.name}</p>
-                      <p className="text-xs text-slate-500">{formatDate(tx.createdAt)} • Customer: {tx.customer}{tx.quantity > 1 ? ` • Qty: ${tx.quantity}` : ''}</p>
+                      <p className="text-xs text-slate-500">{formatDate(tx.createdAt)} • Cliente: {tx.customer}{tx.quantity > 1 ? ` • Cant: ${tx.quantity}` : ''}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-bold text-sm text-slate-900 dark:text-slate-100">${(tx.amount * tx.quantity).toFixed(2)}</p>
-                    <p className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block ${
-                      tx.status === 'PAID' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
+                    <p className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block ${tx.status === 'PAID' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
                       tx.status === 'REFUNDED' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' :
-                      'text-slate-400 bg-slate-100 dark:bg-slate-800'
-                    }`}>
+                        'text-slate-400 bg-slate-100 dark:bg-slate-800'
+                      }`}>
                       {tx.status}
                     </p>
                   </div>

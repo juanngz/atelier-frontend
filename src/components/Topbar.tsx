@@ -25,7 +25,7 @@ export function Topbar() {
           <Search className="absolute left-4 w-4 h-4 text-slate-400" />
           <input 
             className="w-full bg-slate-200/50 dark:bg-slate-800/50 border-none rounded-full py-2.5 pl-12 text-xs focus:ring-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400" 
-            placeholder="Search orders, products..." 
+            placeholder="Buscar pedidos, productos..." 
             type="text"
           />
         </div>
