@@ -39,6 +39,7 @@ interface Transaction {
   product: {
     name: string;
     image: string;
+    category?: string;
   };
 }
 
@@ -63,6 +64,9 @@ export function Sales() {
   const [quantity, setQuantity] = useState('1');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+
+  const getProductDisplayName = (product: Product) =>
+    product.category ? `${product.category} de ${product.name}` : product.name;
 
   const fetchData = async () => {
     try {
@@ -124,9 +128,10 @@ export function Sales() {
     const product = products.find(p => p.id === Number(selectedProductId));
     if (!product) return;
     
+    const displayName = getProductDisplayName(product);
     const newCartItem: CartItem = {
       productId: product.id,
-      productName: product.name,
+      productName: displayName,
       quantity: Number(quantity),
       priceSold: Number(priceSold),
       totalPrice: Number(quantity) * Number(priceSold),
@@ -318,7 +323,7 @@ export function Sales() {
                     >
                       <option value="">Seleccionar un producto...</option>
                       {getProductsByCategory().map(p => (
-                        <option key={p.id} value={p.id}>{p.name} ({p.stock} {p.unidad})</option>
+                                        <option key={p.id} value={p.id}>{getProductDisplayName(p)} ({p.stock} {p.unidad})</option>
                       ))}
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
@@ -447,13 +452,13 @@ export function Sales() {
                     <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 overflow-hidden">
                       <img
                         src={tx.product.image}
-                        alt={tx.product.name}
+                        alt={tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name}
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
                       />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{tx.product.name}</p>
+                                      <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name}</p>
                       <p className="text-xs text-slate-500">{formatDate(tx.createdAt)} • Cliente: {tx.customer}{tx.quantity > 1 ? ` • Cant: ${tx.quantity}` : ''}</p>
                     </div>
                   </div>

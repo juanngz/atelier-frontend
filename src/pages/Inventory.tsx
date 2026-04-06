@@ -293,6 +293,8 @@ export function Inventory() {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
   const selectedProduct = products.find(p => p.id === Number(selectedProductId));
+  const getProductDisplayName = (product: Product) =>
+    product.category && product.name ? `${product.category} de ${product.name}` : product.name;
   const inputClass = "w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-slate-900 dark:text-slate-100 transition-all";
 
   if (loading) {
@@ -353,13 +355,13 @@ export function Inventory() {
                   <div className="col-span-5 flex items-center gap-6">
                     <div className="w-16 h-20 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
                       {product.image ? (
-                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <img src={product.image} alt={getProductDisplayName(product)} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"><Package className="w-6 h-6 text-slate-300" /></div>
                       )}
                     </div>
                     <div>
-                      <h3 className="text-base font-medium text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors">{product.name}</h3>
+                      <h3 className="text-base font-medium text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors">{getProductDisplayName(product)}</h3>
                       <p className="text-xs text-slate-500 mt-1">{product.category}</p>
                     </div>
                   </div>
@@ -443,7 +445,7 @@ export function Inventory() {
                     <option value={CREATE_NEW}>＋ Create new product</option>
                     {products.length > 0 && (
                       <optgroup label="Existing products">
-                        {products.map(p => <option key={p.id} value={p.id}>{p.name} — {p.stock} in stock</option>)}
+                        {products.map(p => <option key={p.id} value={p.id}>{getProductDisplayName(p)} — {p.stock} in stock</option>)}
                       </optgroup>
                     )}
                   </select>
@@ -453,10 +455,10 @@ export function Inventory() {
 
               {isCreateMode && (
                 <>
-                  <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Product Name *</label><input className={inputClass} placeholder="e.g. Silk Blouse" value={newName} onChange={e => setNewName(e.target.value)} /></div>
-                  <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Price *</label><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span><input className={`${inputClass} pl-8`} type="number" step="0.01" placeholder="0.00" value={newPrice} onChange={e => setNewPrice(e.target.value)} /></div></div>
+                  <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Relleno / Sabor *</label><input className={inputClass} placeholder="e.g. Silk Blouse" value={newName} onChange={e => setNewName(e.target.value)} /></div>
+                  <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Precio *</label><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span><input className={`${inputClass} pl-8`} type="number" step="0.01" placeholder="0.00" value={newPrice} onChange={e => setNewPrice(e.target.value)} /></div></div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Category</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Categoria</label>
                     <div className="relative">
                       <select className={`${inputClass} appearance-none`} value={newCategory} onChange={e => setNewCategory(e.target.value)}>
                         <option value="">Select a category...</option>
@@ -475,9 +477,9 @@ export function Inventory() {
               {selectedProduct && !isCreateMode && (
                 <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
                   <div className="w-12 h-14 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
-                    {selectedProduct.image ? <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-5 h-5 text-slate-300" /></div>}
+                    {selectedProduct.image ? <img src={selectedProduct.image} alt={getProductDisplayName(selectedProduct)} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-5 h-5 text-slate-300" /></div>}
                   </div>
-                  <div className="flex-1 min-w-0"><p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{selectedProduct.name}</p><p className="text-xs text-slate-400">{selectedProduct.category}</p></div>
+                  <div className="flex-1 min-w-0"><p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{getProductDisplayName(selectedProduct)}</p><p className="text-xs text-slate-400">{selectedProduct.category}</p></div>
                   <div className="text-right"><p className="text-xs text-slate-400">Current</p><p className="text-lg font-bold text-slate-900 dark:text-slate-100">{selectedProduct.stock}</p></div>
                 </div>
               )}
@@ -494,6 +496,7 @@ export function Inventory() {
                     <select className={`${inputClass} appearance-none`} value={newUnidad} onChange={e => setNewUnidad(e.target.value)}>
                       <option value="cajas">Cajas</option>
                       <option value="kilos">Kilos</option>
+                      <option value="unidades">Unidades</option>
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
                   </div>
@@ -714,6 +717,7 @@ export function Inventory() {
                   <select className={`${inputClass} appearance-none`} value={editUnidad} onChange={e => setEditUnidad(e.target.value)}>
                     <option value="cajas">Cajas</option>
                     <option value="kilos">Kilos</option>
+                    <option value="unidades">Unidades</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
                 </div>
