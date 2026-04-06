@@ -245,9 +245,15 @@ export function Sales() {
   };
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-10">
+      {/* Header */}
+      <section>
+        <h1 className="text-4xl font-semibold tracking-tighter text-slate-900 dark:text-slate-100 mb-2">Registrar Ventas</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">Selecciona un producto, establece el precio de venta y cantidad</p>
+      </section>
+
       {/* Metric Strip */}
-      <div className="flex items-baseline gap-20 mb-16">
+      <div className="flex items-baseline gap-20 mb-10">
         <div>
           <span className="block text-[0.6875rem] font-bold text-slate-400 uppercase tracking-[0.1em] mb-2">Ventas Totales Hoy</span>
           <div className="flex items-baseline gap-2">
@@ -353,11 +359,11 @@ export function Sales() {
               {/* Add to Cart Button */}
               {selectedProductId && priceSold && (
                 <button
-                  className="w-full bg-green-600 text-white py-3 rounded-full font-semibold text-sm transition-all hover:bg-green-700 shadow-xl shadow-green-500/10 active:scale-95"
+                  className="w-full bg-emerald-600 text-white py-3 rounded-full font-semibold text-sm transition-all hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95 shadow-md"
                   type="button"
                   onClick={handleAddToCart}
                 >
-                  Agregar al Carrito
+                  + Agregar al Carrito
                 </button>
               )}
 
@@ -405,12 +411,21 @@ export function Sales() {
               {/* Checkout Button */}
               <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button
-                  className="w-full bg-blue-600 text-white py-4 rounded-full font-semibold text-sm transition-all hover:bg-blue-700 shadow-xl shadow-blue-500/10 active:scale-95 disabled:opacity-50"
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-full font-semibold text-sm transition-all hover:from-green-700 hover:to-emerald-700 hover:shadow-lg hover:shadow-green-500/20 active:scale-95 disabled:opacity-50 shadow-md disabled:shadow-none"
                   type="button"
                   disabled={submitting || cartItems.length === 0}
                   onClick={handleSubmit}
                 >
-                  {submitting ? 'Procesando...' : cartItems.length > 0 ? `Completar Venta (${cartItems.length})` : 'Completar Transacción'}
+                  {submitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Procesando...
+                    </span>
+                  ) : cartItems.length > 0 ? (
+                    `✓ Completar Venta (${cartItems.length} ${cartItems.length === 1 ? 'artículo' : 'artículos'})`
+                  ) : (
+                    'Completar Transacción'
+                  )}
                 </button>
               </div>
             </form>

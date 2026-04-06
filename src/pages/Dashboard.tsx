@@ -7,8 +7,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, 
   Package, 
-  Loader2
+  Loader2,
+  Plus,
+  ShoppingCart,
+  Package2
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { 
   BarChart, 
   Bar, 
@@ -39,6 +43,7 @@ export function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -86,7 +91,55 @@ export function Dashboard() {
   const maxRevenue = Math.max(...data.chartData.map(d => d.revenue), 1);
 
   return (
-    <div className="space-y-14">
+    <div className="space-y-8">
+      {/* Welcome Header */}
+      <section>
+        <h1 className="text-4xl font-semibold tracking-tighter text-slate-900 dark:text-slate-100 mb-2">Bienvenido de nuevo</h1>
+        <p className="text-slate-500 dark:text-slate-400">Aquí está el resumen de tu negocio de hoy</p>
+      </section>
+
+      {/* Quick Actions */}
+      <section className="grid grid-cols-3 gap-4">
+        <button
+          onClick={() => navigate('/sales')}
+          className="group flex items-center gap-4 p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 rounded-2xl border border-blue-200 dark:border-blue-900/50 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-300 text-left"
+        >
+          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <ShoppingCart className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">Registrar Venta</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Añadir nueva transacción</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => navigate('/inventory')}
+          className="group flex items-center gap-4 p-6 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/10 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-300 text-left"
+        >
+          <div className="w-12 h-12 rounded-xl bg-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Package2 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">Ver Inventario</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Gestionar productos</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => navigate('/inventory')}
+          className="group flex items-center gap-4 p-6 bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 rounded-2xl border border-purple-200 dark:border-purple-900/50 hover:shadow-lg hover:border-purple-300 dark:hover:border-purple-700 transition-all duration-300 text-left"
+        >
+          <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Plus className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">Añadir Producto</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Nuevo artículo</p>
+          </div>
+        </button>
+      </section>
+
       {/* Metric Strip */}
       <section>
         <div className="flex flex-wrap gap-20">
