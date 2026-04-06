@@ -17,6 +17,7 @@ import {
   Pencil,
   Trash2
 } from 'lucide-react';
+import { authenticatedFetch } from '../utils/api';
 
 interface Product {
   id: number;
@@ -64,7 +65,14 @@ export function Inventory() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('/api/products');
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Not authenticated');
+        setLoading(false);
+        return;
+      }
+
+      const res = await authenticatedFetch('/api/products');
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       setProducts(data);
@@ -101,11 +109,12 @@ export function Inventory() {
     if (!selectedProductId || !stockQuantity) return;
     const product = products.find(p => p.id === Number(selectedProductId));
     if (!product) return;
+    const token = localStorage.getItem('authToken');
+    if (!token) { alert('Not authenticated'); return; }
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/products/${product.id}`, {
+      const res = await authenticatedFetch(`/api/products/${product.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stock: product.stock + Number(stockQuantity) }),
       });
       if (!res.ok) throw new Error('Failed to update stock');
@@ -118,11 +127,12 @@ export function Inventory() {
 
   const handleCreateProduct = async () => {
     if (!newName || !newPrice) return;
+    const token = localStorage.getItem('authToken');
+    if (!token) { alert('Not authenticated'); return; }
     setSubmitting(true);
     try {
-      const res = await fetch('/api/products', {
+      const res = await authenticatedFetch('/api/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newName, price: Number(newPrice),
           stock: Number(stockQuantity) || 0,
@@ -157,11 +167,12 @@ export function Inventory() {
 
   const handleSaveEdit = async () => {
     if (!editProduct || !editName || !editPrice) return;
+    const token = localStorage.getItem('authToken');
+    if (!token) { alert('Not authenticated'); return; }
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/products/${editProduct.id}`, {
+      const res = await authenticatedFetch(`/api/products/${editProduct.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editName, price: Number(editPrice),
           stock: Number(editStock) || 0, category: editCategory || 'General',
@@ -179,9 +190,13 @@ export function Inventory() {
   const handleDelete = async () => {
     if (!editProduct) return;
     if (!confirm(`Delete "${editProduct.name}"? This cannot be undone.`)) return;
+    const token = localStorage.getItem('authToken');
+    if (!token) { alert('Not authenticated'); return; }
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/products/${editProduct.id}`, { method: 'DELETE' });
+      const res = await authenticatedFetch(`/api/products/${editProduct.id}`, {
+        method: 'DELETE',
+      });
       if (!res.ok && res.status !== 204) throw new Error('Failed to delete');
       setProducts(prev => prev.filter(p => p.id !== editProduct.id));
       closeEditModal();

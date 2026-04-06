@@ -8,6 +8,7 @@ import {
   ChevronDown, 
   Loader2
 } from 'lucide-react';
+import { authenticatedFetch } from '../utils/api';
 
 interface Product {
   id: number;
@@ -54,10 +55,17 @@ export function Sales() {
 
   const fetchData = async () => {
     try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError('Not authenticated');
+        setLoading(false);
+        return;
+      }
+
       const [txRes, prodRes, statsRes] = await Promise.all([
-        fetch('/api/sales'),
-        fetch('/api/products'),
-        fetch('/api/sales/stats'),
+        authenticatedFetch('/api/sales'),
+        authenticatedFetch('/api/products'),
+        authenticatedFetch('/api/sales/stats'),
       ]);
       if (!txRes.ok || !prodRes.ok || !statsRes.ok) throw new Error('Failed to fetch data');
       const [txData, prodData, statsData] = await Promise.all([
@@ -92,12 +100,13 @@ export function Sales() {
 
   const handleSubmit = async () => {
     if (!selectedProductId || !priceSold) return;
+    const token = localStorage.getItem('authToken');
+    if (!token) { alert('Not authenticated'); return; }
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/sales', {
+      const res = await authenticatedFetch('/api/sales', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: Number(selectedProductId),
           amount: Number(priceSold),

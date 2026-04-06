@@ -17,6 +17,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
+import { authenticatedFetch } from '../utils/api';
 
 interface DashboardData {
   dailyRevenue: number;
@@ -40,7 +41,14 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/dashboard')
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setError('No authenticated');
+      setLoading(false);
+      return;
+    }
+
+    authenticatedFetch('/api/dashboard')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch dashboard');
         return res.json();
