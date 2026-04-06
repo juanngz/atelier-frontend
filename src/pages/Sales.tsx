@@ -15,8 +15,17 @@ interface Product {
   name: string;
   price: number;
   stock: number;
+  unidad: string;
   category: string;
   image: string;
+}
+
+interface CartItem {
+  productId: number;
+  productName: string;
+  quantity: number;
+  priceSold: number;
+  totalPrice: number;
 }
 
 interface Transaction {
@@ -48,10 +57,12 @@ export function Sales() {
   const [error, setError] = useState<string | null>(null);
 
   // Form state
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [priceSold, setPriceSold] = useState('');
   const [quantity, setQuantity] = useState('1');
-  const [buyerName, setBuyerName] = useState('');
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const fetchData = async () => {
     try {
@@ -75,6 +86,8 @@ export function Sales() {
       ]);
       setTransactions(txData);
       setProducts(prodData);
+      const uniqueCategories = [...new Set(prodData.map((p: Product) => p.category))].filter(Boolean);
+      setCategories(uniqueCategories);
       setStats(statsData);
     } catch (err: any) {
       setError(err.message);
@@ -87,6 +100,12 @@ export function Sales() {
     fetchData();
   }, []);
 
+  // Get filtered products by category
+  const getProductsByCategory = () => {
+    if (!selectedCategory) return [];
+    return products.filter(p => p.category === selectedCategory);
+  };
+
   // Auto-fill price when product is selected
   const handleProductChange = (productId: string) => {
     setSelectedProductId(productId);
@@ -98,33 +117,96 @@ export function Sales() {
     }
   };
 
+  // Add product to cart
+  const handleAddToCart = () => {
+    if (!selectedProductId || !priceSold || !quantity) return;
+    
+    const product = products.find(p => p.id === Number(selectedProductId));
+    if (!product) return;
+    
+    const newCartItem: CartItem = {
+      productId: product.id,
+      productName: product.name,
+      quantity: Number(quantity),
+      priceSold: Number(priceSold),
+      totalPrice: Number(quantity) * Number(priceSold),
+    };
+
+    // Check if product already in cart, if so update quantity
+    const existingIndex = cartItems.findIndex(item => item.productId === product.id);
+    if (existingIndex >= 0) {
+      const updated = [...cartItems];
+      updated[existingIndex].quantity += Number(quantity);
+      updated[existingIndex].totalPrice = updated[existingIndex].quantity * updated[existingIndex].priceSold;
+      setCartItems(updated);
+    } else {
+      setCartItems([...cartItems, newCartItem]);
+    }
+
+    // Reset form
+    setSelectedProductId('');
+    setPriceSold('');
+    setQuantity('1');
+  };
+
+  // Remove item from cart
+  const handleRemoveFromCart = (productId: number) => {
+    setCartItems(cartItems.filter(item => item.productId !== productId));
+  };
+
+  // Update quantity in cart
+  const handleUpdateCartQuantity = (productId: number, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      handleRemoveFromCart(productId);
+      return;
+    }
+    const updated = cartItems.map(item => 
+      item.productId === productId 
+        ? { ...item, quantity: newQuantity, totalPrice: newQuantity * item.priceSold }
+        : item
+    );
+    setCartItems(updated);
+  };
+
   const handleSubmit = async () => {
-    if (!selectedProductId || !priceSold) return;
+    if (cartItems.length === 0) {
+      alert('Please add items to cart');
+      return;
+    }
     const token = localStorage.getItem('authToken');
     if (!token) { alert('Not authenticated'); return; }
 
     setSubmitting(true);
     try {
-      const res = await authenticatedFetch('/api/sales', {
-        method: 'POST',
-        body: JSON.stringify({
-          productId: Number(selectedProductId),
-          amount: Number(priceSold),
-          quantity: Number(quantity) || 1,
-          customer: buyerName || 'Anonymous',
-        }),
-      });
+      // Create promises for all cart items
+      const promises = cartItems.map(item => 
+        authenticatedFetch('/api/sales', {
+          method: 'POST',
+          body: JSON.stringify({
+            productId: item.productId,
+            amount: item.priceSold,
+            quantity: item.quantity,
+            customer: 'Anonymous',
+          }),
+        })
+      );
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to record sale');
+      const results = await Promise.all(promises);
+      
+      // Check if all requests were successful
+      for (const res of results) {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to record sale');
+        }
       }
 
       // Reset form & refresh data
+      setSelectedCategory('');
       setSelectedProductId('');
       setPriceSold('');
       setQuantity('1');
-      setBuyerName('');
+      setCartItems([]);
       setLoading(true);
       await fetchData();
     } catch (err: any) {
@@ -193,69 +275,142 @@ export function Sales() {
       <div className="grid grid-cols-12 gap-10">
         {/* Left Column: Sales Form */}
         <div className="col-span-12 lg:col-span-4">
-          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-8 sticky top-32 border border-slate-200 dark:border-slate-800">
+          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-8 sticky top-32 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-semibold tracking-tight mb-8 text-slate-900 dark:text-slate-100">Registrar Venta</h2>
             <form className="space-y-6" onSubmit={e => e.preventDefault()}>
+              {/* Category Selection */}
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Selección de Producto</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Seleccionar Categoría</label>
                 <div className="relative">
                   <select
                     className="w-full appearance-none bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
-                    value={selectedProductId}
-                    onChange={e => handleProductChange(e.target.value)}
+                    value={selectedCategory}
+                    onChange={e => {
+                      setSelectedCategory(e.target.value);
+                      setSelectedProductId('');
+                      setPriceSold('');
+                    }}
                   >
-                    <option value="">Seleccionar un producto...</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.stock} en stock)</option>
+                    <option value="">Seleccionar una categoría...</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              {/* Product Selection */}
+              {selectedCategory && (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Precio de Venta</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Seleccionar Producto</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
+                    <select
+                      className="w-full appearance-none bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
+                      value={selectedProductId}
+                      onChange={e => handleProductChange(e.target.value)}
+                    >
+                      <option value="">Seleccionar un producto...</option>
+                      {getProductsByCategory().map(p => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.stock} {p.unidad})</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
+                  </div>
+                </div>
+              )}
+
+              {/* Price and Quantity */}
+              {selectedProductId && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Precio de Venta</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
+                      <input
+                        className="w-full bg-white dark:bg-slate-800 border-none rounded-xl pl-8 pr-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
+                        placeholder="0.00"
+                        type="number"
+                        step="0.01"
+                        value={priceSold}
+                        onChange={e => setPriceSold(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Cantidad</label>
                     <input
-                      className="w-full bg-white dark:bg-slate-800 border-none rounded-xl pl-8 pr-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
-                      placeholder="0.00"
+                      className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
                       type="number"
-                      step="0.01"
-                      value={priceSold}
-                      onChange={e => setPriceSold(e.target.value)}
+                      min="1"
+                      value={quantity}
+                      onChange={e => setQuantity(e.target.value)}
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Cantidad</label>
-                  <input
-                    className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={e => setQuantity(e.target.value)}
-                  />
+              )}
+
+              {/* Add to Cart Button */}
+              {selectedProductId && priceSold && (
+                <button
+                  className="w-full bg-green-600 text-white py-3 rounded-full font-semibold text-sm transition-all hover:bg-green-700 shadow-xl shadow-green-500/10 active:scale-95"
+                  type="button"
+                  onClick={handleAddToCart}
+                >
+                  Agregar al Carrito
+                </button>
+              )}
+
+              {/* Shopping Cart */}
+              {cartItems.length > 0 && (
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Carrito ({cartItems.length} productos)</h3>
+                  <div className="space-y-3 mb-4">
+                    {cartItems.map(item => (
+                      <div key={item.productId} className="flex items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-lg">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{item.productName}</p>
+                          <p className="text-xs text-slate-500">
+                            {item.quantity} × ${item.priceSold.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-blue-600">${item.totalPrice.toFixed(2)}</span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={e => handleUpdateCartQuantity(item.productId, Number(e.target.value))}
+                            className="w-12 bg-white dark:bg-slate-700 border-none rounded px-2 py-1 text-xs text-slate-900 dark:text-slate-100"
+                          />
+                          <button
+                            onClick={() => handleRemoveFromCart(item.productId)}
+                            className="text-red-500 hover:text-red-700 text-sm font-semibold"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg mb-4">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-1">Total:</p>
+                    <p className="text-xl font-bold text-blue-600">
+                      ${cartItems.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Nombre del Comprador (Opcional)</label>
-                <input
-                  className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
-                  placeholder="e.g. Julianne Moore"
-                  type="text"
-                  value={buyerName}
-                  onChange={e => setBuyerName(e.target.value)}
-                />
-              </div>
-              <div className="pt-4">
+              )}
+
+              {/* Checkout Button */}
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button
                   className="w-full bg-blue-600 text-white py-4 rounded-full font-semibold text-sm transition-all hover:bg-blue-700 shadow-xl shadow-blue-500/10 active:scale-95 disabled:opacity-50"
                   type="button"
-                  disabled={submitting || !selectedProductId || !priceSold}
+                  disabled={submitting || cartItems.length === 0}
                   onClick={handleSubmit}
                 >
-                  {submitting ? 'Procesando...' : 'Completar Transacción'}
+                  {submitting ? 'Procesando...' : cartItems.length > 0 ? `Completar Venta (${cartItems.length})` : 'Completar Transacción'}
                 </button>
               </div>
             </form>
