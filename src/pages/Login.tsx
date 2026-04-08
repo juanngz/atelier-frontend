@@ -121,10 +121,6 @@ export function Login() {
         localStorage.setItem('authToken', data.token);
       }
 
-      if (data.id) {
-        localStorage.setItem('userId', String(data.id));
-      }
-
       if (data.nombre) {
         localStorage.setItem('userName', `${data.nombre} ${data.apellido}`);
       }

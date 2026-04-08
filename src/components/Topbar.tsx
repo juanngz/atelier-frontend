@@ -13,7 +13,6 @@ export function Topbar() {
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
-    localStorage.removeItem('userId');
     localStorage.removeItem('userName');
     navigate('/login', { replace: true });
   };
