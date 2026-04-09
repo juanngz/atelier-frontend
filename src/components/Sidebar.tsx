@@ -3,15 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Package, 
   CreditCard, 
-  BarChart3, 
-  Settings, 
-  Sparkles 
+  Sparkles,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -21,6 +21,35 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export function Sidebar() {
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
+
+  // Initialize theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else if (savedTheme === 'light') {
+      setDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   const navItems = [
     { icon: LayoutDashboard, label: 'Panel', to: '/', description: 'Resumen de ventas' },
     { icon: Package, label: 'Inventario', to: '/inventory', description: 'Gestionar productos' },
@@ -60,10 +89,16 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-        <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1 px-2">
-          <p className="font-semibold text-slate-900 dark:text-slate-100">{localStorage.getItem('userName') || 'Usuario'}</p>
-          <p className="text-[10px]">Conectado</p>
+      <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-4">
+        <div className="flex items-center justify-between px-2">
+          <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">{localStorage.getItem('userName') || 'Usuario'}</p>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-200"
+            title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          >
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
       </div>
     </aside>

@@ -6,7 +6,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   ChevronDown,
-  Loader2
+  Loader2,
+  Package
 } from 'lucide-react';
 import { authenticatedFetch } from '../utils/api';
 
@@ -17,7 +18,6 @@ interface Product {
   stock: number;
   unidad: string;
   category: string;
-  image: string;
 }
 
 interface CartItem {
@@ -38,7 +38,6 @@ interface Transaction {
   createdAt: string;
   product: {
     name: string;
-    image: string;
     category?: string;
   };
 }
@@ -449,14 +448,6 @@ export function Sales() {
               transactions.map((tx) => (
                 <div key={tx.id} className="group bg-white dark:bg-slate-900 p-6 rounded-2xl transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 overflow-hidden">
-                      <img
-                        src={tx.product.image}
-                        alt={tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name}
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
                     <div>
                                       <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name}</p>
                       <p className="text-xs text-slate-500">{formatDate(tx.createdAt)} • Cliente: {tx.customer}{tx.quantity > 1 ? ` • Cant: ${tx.quantity}` : ''}</p>

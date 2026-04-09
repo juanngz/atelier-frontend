@@ -26,8 +26,6 @@ interface Product {
   stock: number;
   unidad: string;
   category: string;
-  image: string;
-  description?: string;
 }
 
 const CREATE_NEW = '__CREATE_NEW__';
@@ -49,8 +47,7 @@ export function Inventory() {
   const [newPrice, setNewPrice] = useState('');
   const [newUnidad, setNewUnidad] = useState('cajas');
   const [newCategory, setNewCategory] = useState('');
-  const [newImage, setNewImage] = useState('');
-  const [newDescription, setNewDescription] = useState('');
+
 
   // Categories
   const [categories, setCategories] = useState<string[]>([]);
@@ -72,8 +69,7 @@ export function Inventory() {
   const [editStock, setEditStock] = useState('');
   const [editUnidad, setEditUnidad] = useState('cajas');
   const [editCategory, setEditCategory] = useState('');
-  const [editImage, setEditImage] = useState('');
-  const [editDescription, setEditDescription] = useState('');
+
 
   const isCreateMode = selectedProductId === CREATE_NEW;
 
@@ -120,7 +116,7 @@ export function Inventory() {
 
   const resetNewProductForm = () => {
     setNewName(''); setNewPrice(''); setNewUnidad('cajas');
-    setNewCategory(''); setNewImage(''); setNewDescription('');
+    setNewCategory('');
   };
 
   const openCategoryModal = () => {
@@ -181,7 +177,6 @@ export function Inventory() {
           stock: Number(stockQuantity) || 0,
           unidad: newUnidad,
           category: newCategory || 'General',
-          image: newImage || '', description: newDescription || undefined,
         }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
@@ -202,8 +197,6 @@ export function Inventory() {
     setEditStock(String(product.stock));
     setEditUnidad(product.unidad || 'cajas');
     setEditCategory(product.category);
-    setEditImage(product.image);
-    setEditDescription(product.description || '');
     setShowEditModal(true);
   };
 
@@ -258,7 +251,6 @@ export function Inventory() {
         body: JSON.stringify({
           name: editName, price: Number(editPrice),
           stock: Number(editStock) || 0, unidad: editUnidad, category: editCategory || 'General',
-          image: editImage || '', description: editDescription || undefined,
         }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
@@ -353,13 +345,6 @@ export function Inventory() {
               {getFilteredProducts().map((product) => (
                 <div key={product.id} className="grid grid-cols-12 items-center px-6 py-5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 group">
                   <div className="col-span-5 flex items-center gap-6">
-                    <div className="w-16 h-20 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
-                      {product.image ? (
-                        <img src={product.image} alt={getProductDisplayName(product)} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center"><Package className="w-6 h-6 text-slate-300" /></div>
-                      )}
-                    </div>
                     <div>
                       <h3 className="text-base font-medium text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors">{getProductDisplayName(product)}</h3>
                       <p className="text-xs text-slate-500 mt-1">{product.category}</p>
@@ -469,16 +454,12 @@ export function Inventory() {
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
                     </div>
                   </div>
-                  <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Image URL</label><input className={inputClass} placeholder="https://..." value={newImage} onChange={e => setNewImage(e.target.value)} /></div>
-                  <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Description</label><input className={inputClass} placeholder="Optional" value={newDescription} onChange={e => setNewDescription(e.target.value)} /></div>
+
                 </>
               )}
 
               {selectedProduct && !isCreateMode && (
                 <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
-                  <div className="w-12 h-14 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
-                    {selectedProduct.image ? <img src={selectedProduct.image} alt={getProductDisplayName(selectedProduct)} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-5 h-5 text-slate-300" /></div>}
-                  </div>
                   <div className="flex-1 min-w-0"><p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{getProductDisplayName(selectedProduct)}</p><p className="text-xs text-slate-400">{selectedProduct.category}</p></div>
                   <div className="text-right"><p className="text-xs text-slate-400">Current</p><p className="text-lg font-bold text-slate-900 dark:text-slate-100">{selectedProduct.stock}</p></div>
                 </div>
@@ -734,8 +715,7 @@ export function Inventory() {
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
                 </div>
               </div>
-              <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Image URL</label><input className={inputClass} value={editImage} onChange={e => setEditImage(e.target.value)} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Description</label><input className={inputClass} value={editDescription} onChange={e => setEditDescription(e.target.value)} /></div>
+
 
               <div className="flex gap-3 pt-2">
                 <button

@@ -31,7 +31,6 @@ interface DashboardData {
   recentTransactions: {
     id: number;
     productName: string;
-    productImage: string;
     customer: string;
     amount: number;
     status: string;
@@ -231,14 +230,6 @@ export function Dashboard() {
             {data.recentTransactions.map((tx) => (
               <div key={tx.id} className="grid grid-cols-12 items-center px-6 py-5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                 <div className="col-span-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <img 
-                      src={tx.productImage} 
-                      alt={tx.productName} 
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{tx.productName}</p>
                     <p className="text-[10px] text-slate-400">{formatDate(tx.date)}</p>

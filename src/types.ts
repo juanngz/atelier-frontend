@@ -10,15 +10,12 @@ export interface Product {
   stock: number;
   unidad: string;
   category: string;
-  image: string;
-  description?: string;
 }
 
 export interface Order {
   id: string;
   productId: string;
   productName: string;
-  productImage: string;
   status: 'SHIPPED' | 'PROCESSING' | 'CANCELLED';
   customer: string;
   amount: number;
@@ -28,7 +25,6 @@ export interface Order {
 export interface Transaction {
   id: string;
   productName: string;
-  productImage: string;
   customer: string;
   amount: number;
   status: 'PAID' | 'REFUNDED' | 'PENDING';
