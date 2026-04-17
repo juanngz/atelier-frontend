@@ -2,6 +2,9 @@
  * Helper function to make authenticated API requests
  * Automatically includes the JWT token from localStorage
  */
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export async function authenticatedFetch(
   url: string,
   options: RequestInit = {}
@@ -17,7 +20,7 @@ export async function authenticatedFetch(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  return fetch(url, {
+  return fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
   });

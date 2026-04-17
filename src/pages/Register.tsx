@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AtSign, Lock, Sparkles, User } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function Register() {
@@ -41,7 +42,7 @@ export function Register() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/register', {
+      const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
