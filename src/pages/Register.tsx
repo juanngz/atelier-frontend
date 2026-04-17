@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AtSign, Lock, Sparkles, User } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://atelier-backend-git-deploy-juanngzs-projects.vercel.app';
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function Register() {
