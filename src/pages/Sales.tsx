@@ -3,12 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  ChevronDown,
-  Loader2,
-  Package
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { authenticatedFetch } from '../utils/api';
 
 interface Product {
@@ -31,7 +27,6 @@ interface CartItem {
 interface Transaction {
   id: number;
   productId: number;
-  customer: string;
   amount: number;
   quantity: number;
   status: string;
@@ -89,7 +84,7 @@ export function Sales() {
       ]);
       setTransactions(txData);
       setProducts(prodData);
-      const uniqueCategories = [...new Set(prodData.map((p: Product) => p.category))].filter(Boolean);
+      const uniqueCategories = [...new Set(prodData.map((p: Product) => p.category))].filter(Boolean) as string[];
       setCategories(uniqueCategories);
       setStats(statsData);
     } catch (err: any) {
@@ -190,7 +185,6 @@ export function Sales() {
             productId: item.productId,
             amount: item.priceSold,
             quantity: item.quantity,
-            customer: 'Anonymous',
           }),
         })
       );
@@ -269,7 +263,6 @@ export function Sales() {
           <span className="block text-[0.6875rem] font-bold text-slate-400 uppercase tracking-[0.1em] mb-2">Valor Promedio de Orden</span>
           <div className="flex items-baseline gap-2">
             <span className="text-[3.5rem] font-semibold tracking-tighter text-slate-900 dark:text-slate-100 leading-none">${stats.avgOrderValue.toLocaleString()}</span>
-            <span className="text-sm font-semibold text-slate-400">USD</span>
           </div>
         </div>
         <div className="h-12 w-[1px] bg-slate-200 dark:bg-slate-800 self-center"></div>
@@ -349,13 +342,20 @@ export function Sales() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Cantidad</label>
-                    <input
-                      className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
-                      type="number"
-                      min="1"
-                      value={quantity}
-                      onChange={e => setQuantity(e.target.value)}
-                    />
+                    <div className="relative">
+                      <input
+                        className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 pr-12 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
+                        type="number"
+                        min="1"
+                        value={quantity}
+                        onChange={e => setQuantity(e.target.value)}
+                      />
+                      {selectedProductId && (
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                          {products.find(p => p.id === Number(selectedProductId))?.unidad}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -450,7 +450,7 @@ export function Sales() {
                   <div className="flex items-center gap-5">
                     <div>
                                       <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name}</p>
-                      <p className="text-xs text-slate-500">{formatDate(tx.createdAt)} • Cliente: {tx.customer}{tx.quantity > 1 ? ` • Cant: ${tx.quantity}` : ''}</p>
+                      <p className="text-xs text-slate-500">{formatDate(tx.createdAt)}{tx.quantity > 1 ? ` • Cant: ${tx.quantity}` : ''}</p>
                     </div>
                   </div>
                   <div className="text-right">

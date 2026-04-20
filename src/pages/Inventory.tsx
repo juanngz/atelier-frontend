@@ -88,7 +88,7 @@ export function Inventory() {
       setProducts(data);
       
       // Extract unique categories
-      const uniqueCategories = [...new Set(data.map((p: Product) => p.category))].filter(Boolean);
+      const uniqueCategories = [...new Set(data.map((p: Product) => p.category))].filter(Boolean) as string[];
       setCategories(uniqueCategories);
     } catch (err: any) {
       setError(err.message);
