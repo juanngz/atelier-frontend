@@ -4,13 +4,14 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  Package, 
+import {
+  TrendingUp,
+  Package,
   Loader2,
   Plus,
   ShoppingCart,
-  Package2
+  Package2,
+  AlertTriangle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -31,10 +32,16 @@ interface DashboardData {
   recentTransactions: {
     id: number;
     productName: string;
-    customer: string;
     amount: number;
     status: string;
     date: string;
+  }[];
+  lowStockProducts: {
+    id: number;
+    name: string;
+    stock: number;
+    unidad: string;
+    category: string;
   }[];
 }
 
@@ -139,6 +146,47 @@ export function Dashboard() {
         </button>
       </section>
 
+      {/* Low Stock Alert */}
+      {data.lowStockProducts.length > 0 && (
+        <section className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                  {data.lowStockProducts.length === 1
+                    ? '1 producto con stock bajo'
+                    : `${data.lowStockProducts.length} productos con stock bajo`}
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-500">Stock igual o menor a 5 unidades</p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/inventory')}
+              className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
+            >
+              Ver inventario →
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {data.lowStockProducts.map(p => (
+              <div key={p.id} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/50 rounded-xl px-3 py-2">
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{p.name}</span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  p.stock === 0
+                    ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                }`}>
+                  {p.stock === 0 ? 'Sin stock' : `${p.stock} ${p.unidad}`}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Metric Strip */}
       <section>
         <div className="flex flex-wrap gap-20">
@@ -222,20 +270,19 @@ export function Dashboard() {
         ) : (
           <div className="space-y-1">
             <div className="grid grid-cols-12 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              <div className="col-span-4">Producto</div>
-              <div className="col-span-3 text-center">Estado</div>
-              <div className="col-span-3 text-center">Cliente</div>
+              <div className="col-span-6">Producto</div>
+              <div className="col-span-4 text-center">Estado</div>
               <div className="col-span-2 text-right">Monto</div>
             </div>
             {data.recentTransactions.map((tx) => (
               <div key={tx.id} className="grid grid-cols-12 items-center px-6 py-5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                <div className="col-span-4 flex items-center gap-4">
+                <div className="col-span-6 flex items-center gap-4">
                   <div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{tx.productName}</p>
                     <p className="text-[10px] text-slate-400">{formatDate(tx.date)}</p>
                   </div>
                 </div>
-                <div className="col-span-3 flex justify-center">
+                <div className="col-span-4 flex justify-center">
                   <span className={`px-3 py-1 text-[10px] font-bold rounded-full ${
                     tx.status === 'PAID' ? 'bg-green-50 text-green-600 dark:bg-green-900/20' :
                     tx.status === 'REFUNDED' ? 'bg-orange-50 text-orange-600 dark:bg-orange-900/20' :
@@ -244,7 +291,6 @@ export function Dashboard() {
                     {tx.status}
                   </span>
                 </div>
-                <div className="col-span-3 text-center text-sm font-medium text-slate-600 dark:text-slate-400">{tx.customer}</div>
                 <div className="col-span-2 text-right text-sm font-bold text-slate-900 dark:text-slate-100">${tx.amount.toFixed(2)}</div>
               </div>
             ))}
