@@ -3,12 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  ChevronDown,
-  Loader2,
-  Package
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronDown, Loader2, Pencil, Trash2, X } from 'lucide-react';
 import { authenticatedFetch } from '../utils/api';
 
 interface Product {
@@ -31,7 +27,6 @@ interface CartItem {
 interface Transaction {
   id: number;
   productId: number;
-  customer: string;
   amount: number;
   quantity: number;
   status: string;
@@ -64,6 +59,52 @@ export function Sales() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
 
+  // Edit transaction modal
+  const [showTxModal, setShowTxModal] = useState(false);
+  const [editTx, setEditTx] = useState<Transaction | null>(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [editQuantity, setEditQuantity] = useState('');
+  const [editStatus, setEditStatus] = useState('');
+  const [txSubmitting, setTxSubmitting] = useState(false);
+
+  const openTxModal = (tx: Transaction) => {
+    setEditTx(tx);
+    setEditAmount(String(tx.amount));
+    setEditQuantity(String(tx.quantity));
+    setEditStatus(tx.status);
+    setShowTxModal(true);
+  };
+
+  const closeTxModal = () => { setShowTxModal(false); setEditTx(null); };
+
+  const handleSaveTx = async () => {
+    if (!editTx) return;
+    setTxSubmitting(true);
+    try {
+      const res = await authenticatedFetch(`/api/sales/${editTx.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ amount: Number(editAmount), quantity: Number(editQuantity), status: editStatus }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+      closeTxModal();
+      await fetchData();
+    } catch (err: any) { alert(err.message); }
+    finally { setTxSubmitting(false); }
+  };
+
+  const handleDeleteTx = async () => {
+    if (!editTx) return;
+    if (!confirm('¿Eliminar esta transacción? El stock será restaurado.')) return;
+    setTxSubmitting(true);
+    try {
+      const res = await authenticatedFetch(`/api/sales/${editTx.id}`, { method: 'DELETE' });
+      if (!res.ok && res.status !== 204) throw new Error('Failed to delete');
+      closeTxModal();
+      await fetchData();
+    } catch (err: any) { alert(err.message); }
+    finally { setTxSubmitting(false); }
+  };
+
   const getProductDisplayName = (product: Product) =>
     product.category ? `${product.category} de ${product.name}` : product.name;
 
@@ -89,7 +130,7 @@ export function Sales() {
       ]);
       setTransactions(txData);
       setProducts(prodData);
-      const uniqueCategories = [...new Set(prodData.map((p: Product) => p.category))].filter(Boolean);
+      const uniqueCategories = [...new Set(prodData.map((p: Product) => p.category))].filter(Boolean) as string[];
       setCategories(uniqueCategories);
       setStats(statsData);
     } catch (err: any) {
@@ -190,7 +231,6 @@ export function Sales() {
             productId: item.productId,
             amount: item.priceSold,
             quantity: item.quantity,
-            customer: 'Anonymous',
           }),
         })
       );
@@ -269,7 +309,6 @@ export function Sales() {
           <span className="block text-[0.6875rem] font-bold text-slate-400 uppercase tracking-[0.1em] mb-2">Valor Promedio de Orden</span>
           <div className="flex items-baseline gap-2">
             <span className="text-[3.5rem] font-semibold tracking-tighter text-slate-900 dark:text-slate-100 leading-none">${stats.avgOrderValue.toLocaleString()}</span>
-            <span className="text-sm font-semibold text-slate-400">USD</span>
           </div>
         </div>
         <div className="h-12 w-[1px] bg-slate-200 dark:bg-slate-800 self-center"></div>
@@ -349,13 +388,20 @@ export function Sales() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Cantidad</label>
-                    <input
-                      className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
-                      type="number"
-                      min="1"
-                      value={quantity}
-                      onChange={e => setQuantity(e.target.value)}
-                    />
+                    <div className="relative">
+                      <input
+                        className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 pr-12 py-3 text-sm focus:ring-1 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100 shadow-sm"
+                        type="number"
+                        min="1"
+                        value={quantity}
+                        onChange={e => setQuantity(e.target.value)}
+                      />
+                      {selectedProductId && (
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                          {products.find(p => p.id === Number(selectedProductId))?.unidad}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -449,18 +495,26 @@ export function Sales() {
                 <div key={tx.id} className="group bg-white dark:bg-slate-900 p-6 rounded-2xl transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-5">
                     <div>
-                                      <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name}</p>
-                      <p className="text-xs text-slate-500">{formatDate(tx.createdAt)} • Cliente: {tx.customer}{tx.quantity > 1 ? ` • Cant: ${tx.quantity}` : ''}</p>
+                      <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name}</p>
+                      <p className="text-xs text-slate-500">{formatDate(tx.createdAt)}{tx.quantity > 1 ? ` • Cant: ${tx.quantity}` : ''}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-sm text-slate-900 dark:text-slate-100">${(tx.amount * tx.quantity).toFixed(2)}</p>
-                    <p className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block ${tx.status === 'PAID' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
-                      tx.status === 'REFUNDED' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' :
-                        'text-slate-400 bg-slate-100 dark:bg-slate-800'
-                      }`}>
-                      {tx.status}
-                    </p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-bold text-sm text-slate-900 dark:text-slate-100">${(tx.amount * tx.quantity).toFixed(2)}</p>
+                      <p className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block ${tx.status === 'PAID' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
+                        tx.status === 'REFUNDED' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' :
+                          'text-slate-400 bg-slate-100 dark:bg-slate-800'
+                        }`}>
+                        {tx.status}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => openTxModal(tx)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-slate-400" />
+                    </button>
                   </div>
                 </div>
               ))
@@ -468,6 +522,72 @@ export function Sales() {
           </div>
         </div>
       </div>
+
+      {/* Edit Transaction Modal */}
+      {showTxModal && editTx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeTxModal} />
+          <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md mx-4 ring-1 ring-black/5">
+            <div className="flex items-center justify-between px-8 pt-8 pb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Editar Transacción</h3>
+                <p className="text-xs text-slate-400">{editTx.product.category ? `${editTx.product.category} de ${editTx.product.name}` : editTx.product.name}</p>
+              </div>
+              <button onClick={closeTxModal} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+            <div className="px-8 pb-8 space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Precio unitario</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
+                  <input
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-8 pr-4 py-3.5 text-sm focus:ring-2 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100"
+                    type="number" step="0.01" value={editAmount}
+                    onChange={e => setEditAmount(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Cantidad</label>
+                <input
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100"
+                  type="number" min="1" value={editQuantity}
+                  onChange={e => setEditQuantity(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Estado</label>
+                <select
+                  className="w-full appearance-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-blue-500/30 text-slate-900 dark:text-slate-100"
+                  value={editStatus} onChange={e => setEditStatus(e.target.value)}
+                >
+                  <option value="PAID">PAID</option>
+                  <option value="REFUNDED">REFUNDED</option>
+                  <option value="PENDING">PENDING</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleDeleteTx}
+                  disabled={txSubmitting}
+                  className="flex items-center gap-2 px-5 py-4 rounded-full border border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-900/10 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" /> Eliminar
+                </button>
+                <button
+                  onClick={handleSaveTx}
+                  disabled={txSubmitting || !editAmount || !editQuantity}
+                  className="flex-1 bg-blue-600 text-white py-4 rounded-full font-semibold text-sm hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 shadow-md"
+                >
+                  {txSubmitting ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -29,6 +29,7 @@ interface Product {
 }
 
 const CREATE_NEW = '__CREATE_NEW__';
+const CREATE_NEW_CAT = '__CREATE_NEW_CAT__';
 
 export function Inventory() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -47,6 +48,7 @@ export function Inventory() {
   const [newPrice, setNewPrice] = useState('');
   const [newUnidad, setNewUnidad] = useState('cajas');
   const [newCategory, setNewCategory] = useState('');
+  const [isNewCategoryMode, setIsNewCategoryMode] = useState(false);
 
 
   // Categories
@@ -88,7 +90,7 @@ export function Inventory() {
       setProducts(data);
       
       // Extract unique categories
-      const uniqueCategories = [...new Set(data.map((p: Product) => p.category))].filter(Boolean);
+      const uniqueCategories = [...new Set(data.map((p: Product) => p.category))].filter(Boolean) as string[];
       setCategories(uniqueCategories);
     } catch (err: any) {
       setError(err.message);
@@ -116,7 +118,7 @@ export function Inventory() {
 
   const resetNewProductForm = () => {
     setNewName(''); setNewPrice(''); setNewUnidad('cajas');
-    setNewCategory('');
+    setNewCategory(''); setIsNewCategoryMode(false);
   };
 
   const openCategoryModal = () => {
@@ -444,15 +446,46 @@ export function Inventory() {
                   <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Precio *</label><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span><input className={`${inputClass} pl-8`} type="number" step="0.01" placeholder="0.00" value={newPrice} onChange={e => setNewPrice(e.target.value)} /></div></div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Categoria</label>
-                    <div className="relative">
-                      <select className={`${inputClass} appearance-none`} value={newCategory} onChange={e => setNewCategory(e.target.value)}>
-                        <option value="">Select a category...</option>
-                        {categories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
-                    </div>
+                    {isNewCategoryMode ? (
+                      <div className="flex gap-2">
+                        <input
+                          className={inputClass}
+                          placeholder="Nombre de nueva categoría..."
+                          value={newCategory}
+                          onChange={e => setNewCategory(e.target.value)}
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={() => { setIsNewCategoryMode(false); setNewCategory(''); }}
+                          className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 text-xs font-semibold transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <select
+                          className={`${inputClass} appearance-none`}
+                          value={newCategory}
+                          onChange={e => {
+                            if (e.target.value === CREATE_NEW_CAT) {
+                              setIsNewCategoryMode(true);
+                              setNewCategory('');
+                            } else {
+                              setNewCategory(e.target.value);
+                            }
+                          }}
+                        >
+                          <option value="">Seleccionar categoría...</option>
+                          <option value={CREATE_NEW_CAT}>＋ Crear nueva categoría</option>
+                          {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 w-4 h-4" />
+                      </div>
+                    )}
                   </div>
 
                 </>
