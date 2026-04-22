@@ -66,16 +66,18 @@ export function Sales() {
   const [editQuantity, setEditQuantity] = useState('');
   const [editStatus, setEditStatus] = useState('');
   const [txSubmitting, setTxSubmitting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const openTxModal = (tx: Transaction) => {
     setEditTx(tx);
     setEditAmount(String(tx.amount));
     setEditQuantity(String(tx.quantity));
     setEditStatus(tx.status);
+    setConfirmDelete(false);
     setShowTxModal(true);
   };
 
-  const closeTxModal = () => { setShowTxModal(false); setEditTx(null); };
+  const closeTxModal = () => { setShowTxModal(false); setEditTx(null); setConfirmDelete(false); };
 
   const handleSaveTx = async () => {
     if (!editTx) return;
@@ -94,7 +96,6 @@ export function Sales() {
 
   const handleDeleteTx = async () => {
     if (!editTx) return;
-    if (!confirm('¿Eliminar esta transacción? El stock será restaurado.')) return;
     setTxSubmitting(true);
     try {
       const res = await authenticatedFetch(`/api/sales/${editTx.id}`, { method: 'DELETE' });
@@ -568,22 +569,44 @@ export function Sales() {
                   <option value="PENDING">PENDING</option>
                 </select>
               </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleDeleteTx}
-                  disabled={txSubmitting}
-                  className="flex items-center gap-2 px-5 py-4 rounded-full border border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-900/10 transition-all active:scale-95 disabled:opacity-50"
-                >
-                  <Trash2 className="w-4 h-4" /> Eliminar
-                </button>
-                <button
-                  onClick={handleSaveTx}
-                  disabled={txSubmitting || !editAmount || !editQuantity}
-                  className="flex-1 bg-blue-600 text-white py-4 rounded-full font-semibold text-sm hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 shadow-md"
-                >
-                  {txSubmitting ? 'Guardando...' : 'Guardar cambios'}
-                </button>
-              </div>
+              {confirmDelete ? (
+                <div className="pt-2 space-y-3">
+                  <p className="text-sm text-center text-slate-600 dark:text-slate-400">¿Eliminar esta transacción? El stock será restaurado.</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      disabled={txSubmitting}
+                      className="flex-1 py-4 rounded-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleDeleteTx}
+                      disabled={txSubmitting}
+                      className="flex-1 bg-red-600 text-white py-4 rounded-full font-semibold text-sm hover:bg-red-700 transition-all active:scale-95 disabled:opacity-50 shadow-md"
+                    >
+                      {txSubmitting ? 'Eliminando...' : 'Confirmar'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    disabled={txSubmitting}
+                    className="flex items-center gap-2 px-5 py-4 rounded-full border border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 dark:hover:bg-red-900/10 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <Trash2 className="w-4 h-4" /> Eliminar
+                  </button>
+                  <button
+                    onClick={handleSaveTx}
+                    disabled={txSubmitting || !editAmount || !editQuantity}
+                    className="flex-1 bg-blue-600 text-white py-4 rounded-full font-semibold text-sm hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 shadow-md"
+                  >
+                    {txSubmitting ? 'Guardando...' : 'Guardar cambios'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
