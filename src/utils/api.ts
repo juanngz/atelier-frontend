@@ -3,7 +3,7 @@
  * Automatically includes the JWT token from localStorage
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://atelier-backend-git-deploy-juanngzs-projects.vercel.app';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://atelier-backend-git-main-juanngzs-projects.vercel.app';
 
 export async function authenticatedFetch(
   url: string,
