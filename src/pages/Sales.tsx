@@ -68,12 +68,12 @@ export function Sales() {
   const [txSubmitting, setTxSubmitting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const openTxModal = (tx: Transaction) => {
+  const openTxModal = (tx: Transaction, isDelete: boolean = false) => {
     setEditTx(tx);
     setEditAmount(String(tx.amount));
     setEditQuantity(String(tx.quantity));
     setEditStatus(tx.status);
-    setConfirmDelete(false);
+    setConfirmDelete(isDelete);
     setShowTxModal(true);
   };
 
@@ -510,12 +510,22 @@ export function Sales() {
                         {tx.status}
                       </p>
                     </div>
-                    <button
-                      onClick={() => openTxModal(tx)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
-                    >
-                      <Pencil className="w-3.5 h-3.5 text-slate-400" />
-                    </button>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                      <button
+                        onClick={() => openTxModal(tx)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-slate-400" />
+                      </button>
+                      <button
+                        onClick={() => openTxModal(tx, true)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
