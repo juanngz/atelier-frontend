@@ -99,7 +99,11 @@ export function Sales() {
     setTxSubmitting(true);
     try {
       const res = await authenticatedFetch(`/api/sales/${editTx.id}`, { method: 'DELETE' });
-      if (!res.ok && res.status !== 204) throw new Error('Failed to delete');
+      if (!res.ok && res.status !== 204) {
+        const errorText = await res.text();
+        console.error("Backend delete error:", res.status, errorText);
+        throw new Error(`Failed to delete (${res.status}): ${errorText.substring(0, 50)}`);
+      }
       closeTxModal();
       await fetchData();
     } catch (err: any) { alert(err.message); }
