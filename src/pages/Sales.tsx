@@ -40,15 +40,16 @@ interface Stats {
 }
 
 interface PromotionItem {
-  productId: number;
+  productId?: number | null;
+  categoryName?: string | null;
   quantity: number;
-  product: {
+  product?: {
     id: number;
     name: string;
     category: string;
     price: number;
     unidad: string;
-  };
+  } | null;
 }
 
 interface Promotion {
@@ -90,7 +91,7 @@ interface RegularLine {
 type CartLine = PromoLine | RegularLine;
 
 // Computes which promos apply given current cart and returns resolved lines
-function applyPromotions(cartItems: CartItem[], promotions: Promotion[]): CartLine[] {
+function applyPromotions(cartItems: CartItem[], promotions: Promotion[], products: Product[]): CartLine[] {
   const remaining = new Map<number, number>();
   for (const item of cartItems) {
     remaining.set(item.productId, (remaining.get(item.productId) ?? 0) + item.quantity);
@@ -101,36 +102,71 @@ function applyPromotions(cartItems: CartItem[], promotions: Promotion[]): CartLi
   for (const promo of promotions.filter(p => p.isActive)) {
     if (promo.items.length === 0) continue;
 
+    // How many times can we fully apply this promo?
     let count = Infinity;
     for (const pi of promo.items) {
-      const available = remaining.get(pi.productId) ?? 0;
-      count = Math.min(count, Math.floor(available / pi.quantity));
+      if (pi.productId != null) {
+        const available = remaining.get(pi.productId) ?? 0;
+        count = Math.min(count, Math.floor(available / pi.quantity));
+      } else if (pi.categoryName) {
+        const totalInCat = cartItems
+          .filter(ci => products.find(p => p.id === ci.productId)?.category === pi.categoryName)
+          .reduce((sum, ci) => sum + (remaining.get(ci.productId) ?? 0), 0);
+        count = Math.min(count, Math.floor(totalInCat / pi.quantity));
+      }
     }
     if (!isFinite(count) || count === 0) continue;
 
-    // Proportional price allocation per product
-    const totalRegular = promo.items.reduce((sum, pi) => {
-      return sum + pi.product.price * pi.quantity;
-    }, 0);
+    // Collect covered items and subtract from remaining
+    const covered: Array<{ productId: number; productName: string; quantityCovered: number; regularPrice: number }> = [];
 
-    const lineItems: PromoLineItem[] = promo.items.map(pi => {
-      const share = totalRegular > 0 ? (pi.product.price * pi.quantity) / totalRegular : 1 / promo.items.length;
-      const unitPrice = (share * promo.promoPrice) / pi.quantity;
-      const productName = pi.product.category
-        ? `${pi.product.category} de ${pi.product.name}`
-        : pi.product.name;
-      return {
-        productId: pi.productId,
-        productName,
-        quantityCovered: pi.quantity * count,
-        unitPrice,
-      };
-    });
-
-    // Subtract from remaining
     for (const pi of promo.items) {
-      remaining.set(pi.productId, (remaining.get(pi.productId) ?? 0) - pi.quantity * count);
+      if (pi.productId != null) {
+        const product = products.find(p => p.id === pi.productId);
+        if (!product) continue;
+        const qty = pi.quantity * count;
+        remaining.set(pi.productId, (remaining.get(pi.productId) ?? 0) - qty);
+        covered.push({
+          productId: pi.productId,
+          productName: product.category ? `${product.category} de ${product.name}` : product.name,
+          quantityCovered: qty,
+          regularPrice: product.price,
+        });
+      } else if (pi.categoryName) {
+        let toTake = pi.quantity * count;
+        const catItems = cartItems.filter(ci => {
+          const p = products.find(p => p.id === ci.productId);
+          return p?.category === pi.categoryName && (remaining.get(ci.productId) ?? 0) > 0;
+        });
+        for (const ci of catItems) {
+          if (toTake <= 0) break;
+          const available = remaining.get(ci.productId) ?? 0;
+          const take = Math.min(available, toTake);
+          remaining.set(ci.productId, available - take);
+          toTake -= take;
+          const product = products.find(p => p.id === ci.productId)!;
+          covered.push({
+            productId: ci.productId,
+            productName: product.category ? `${product.category} de ${product.name}` : product.name,
+            quantityCovered: take,
+            regularPrice: product.price,
+          });
+        }
+      }
     }
+
+    // Allocate promo price proportionally by regular price
+    const totalRegular = covered.reduce((sum, c) => sum + c.regularPrice * c.quantityCovered, 0);
+    const promoTotal = promo.promoPrice * count;
+
+    const lineItems: PromoLineItem[] = covered.map(c => ({
+      productId: c.productId,
+      productName: c.productName,
+      quantityCovered: c.quantityCovered,
+      unitPrice: totalRegular > 0
+        ? (c.regularPrice / totalRegular) * promoTotal
+        : promoTotal / covered.reduce((s, x) => s + x.quantityCovered, 0),
+    }));
 
     lines.push({
       type: 'promo',
@@ -139,7 +175,7 @@ function applyPromotions(cartItems: CartItem[], promotions: Promotion[]): CartLi
       promoCount: count,
       promoPrice: promo.promoPrice,
       lineItems,
-      total: promo.promoPrice * count,
+      total: promoTotal,
     });
   }
 
@@ -318,8 +354,8 @@ export function Sales() {
 
   // Resolved cart: promos applied
   const resolvedCart = useMemo(
-    () => applyPromotions(cartItems, promotions),
-    [cartItems, promotions]
+    () => applyPromotions(cartItems, promotions, products),
+    [cartItems, promotions, products]
   );
 
   const resolvedTotal = resolvedCart.reduce((sum, line) => sum + line.total, 0);
