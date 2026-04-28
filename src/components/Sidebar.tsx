@@ -5,10 +5,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  CreditCard, 
+import {
+  LayoutDashboard,
+  Package,
+  CreditCard,
+  Tag,
   Sparkles,
   Sun,
   Moon
@@ -54,6 +55,7 @@ export function Sidebar() {
     { icon: LayoutDashboard, label: 'Panel', to: '/', description: 'Resumen de ventas' },
     { icon: Package, label: 'Inventario', to: '/inventory', description: 'Gestionar productos' },
     { icon: CreditCard, label: 'Ventas', to: '/sales', description: 'Registrar ventas' },
+    { icon: Tag, label: 'Promociones', to: '/promotions', description: 'Combos y descuentos' },
   ];
 
   return (

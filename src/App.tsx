@@ -9,6 +9,7 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Inventory } from './pages/Inventory';
 import { Sales } from './pages/Sales';
+import { Promotions } from './pages/Promotions';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/sales" element={<Sales />} />
+          <Route path="/promotions" element={<Promotions />} />
           <Route path="/analytics" element={<Dashboard />} />
           <Route path="/settings" element={<Dashboard />} />
         </Route>
