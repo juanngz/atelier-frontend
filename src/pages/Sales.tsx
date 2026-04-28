@@ -555,7 +555,7 @@ export function Sales() {
                   </div>
 
                   {/* Promo-resolved summary */}
-                  <div className={`rounded-xl p-4 space-y-2 ${hasPromos ? 'bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/40' : 'bg-blue-50 dark:bg-blue-900/10'}`}>
+                  <div className="rounded-xl p-4 space-y-2 bg-blue-50 dark:bg-blue-900/10">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
                       {hasPromos ? 'Resumen con Promociones' : 'Resumen'}
                     </p>
