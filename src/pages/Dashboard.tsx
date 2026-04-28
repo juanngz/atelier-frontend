@@ -182,7 +182,7 @@ export function Dashboard() {
               <div className="flex flex-wrap gap-2">
                 {(data.lowStockProducts || []).map(p => (
                   <div key={p.id} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/50 rounded-xl px-3 py-2">
-                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{p.name}</span>
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{p.category ? `${p.category} de ${p.name}` : p.name}</span>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                       p.stock === 0
                         ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
