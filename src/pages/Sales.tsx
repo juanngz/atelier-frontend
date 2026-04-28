@@ -26,7 +26,9 @@ interface Transaction {
   quantity: number;
   status: string;
   createdAt: string;
-  promotionName?: string;
+  promotionId?: number | null;
+  promotionName?: string | null;
+  saleGroupId?: string | null;
   product: {
     name: string;
     category?: string;
@@ -363,6 +365,19 @@ export function Sales() {
   const totalSaving = regularTotal - resolvedTotal;
   const hasPromos = resolvedCart.some(l => l.type === 'promo');
 
+  // Group transactions by saleGroupId for the history display
+  const groupedSales = useMemo(() => {
+    const groups = new Map<string, Transaction[]>();
+    for (const tx of transactions) {
+      const key = tx.saleGroupId || `_solo_${tx.id}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(tx);
+    }
+    return [...groups.values()].sort(
+      (a, b) => new Date(b[0].createdAt).getTime() - new Date(a[0].createdAt).getTime()
+    );
+  }, [transactions]);
+
   const handleSubmit = async () => {
     if (cartItems.length === 0) { alert('Agregá artículos al carrito'); return; }
     const token = localStorage.getItem('authToken');
@@ -370,6 +385,7 @@ export function Sales() {
 
     setSubmitting(true);
     try {
+      const saleGroupId = crypto.randomUUID();
       const promises = resolvedCart.flatMap(line => {
         if (line.type === 'promo') {
           return line.lineItems.map(item =>
@@ -381,6 +397,7 @@ export function Sales() {
                 quantity: item.quantityCovered,
                 promotionId: line.promotionId,
                 promotionName: line.promotionName,
+                saleGroupId,
               }),
             })
           );
@@ -391,6 +408,7 @@ export function Sales() {
             productId: line.productId,
             amount: line.unitPrice,
             quantity: line.quantity,
+            saleGroupId,
           }),
         })];
       });
@@ -669,56 +687,120 @@ export function Sales() {
           </div>
         </div>
 
-        {/* Right Column: Transactions */}
+        {/* Right Column: Ventas Recientes (grouped) */}
         <div className="col-span-12 lg:col-span-8">
           <div className="flex justify-between items-center mb-8 px-4">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Transacciones Recientes</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Ventas Recientes</h2>
           </div>
-          <div className="space-y-3">
-            {transactions.length === 0 ? (
-              <p className="text-center text-slate-400 py-12 text-sm">Aún no hay transacciones. ¡Registrá tu primera venta!</p>
+          <div className="space-y-4">
+            {groupedSales.length === 0 ? (
+              <p className="text-center text-slate-400 py-12 text-sm">Aún no hay ventas. ¡Registrá tu primera venta!</p>
             ) : (
-              transactions.map((tx) => (
-                <div key={tx.id} className="group bg-white dark:bg-slate-900 p-6 rounded-2xl transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <div className="flex items-center gap-5">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                          {tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name}
-                        </p>
-                        {tx.promotionName && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
-                            <Tag className="w-2.5 h-2.5" />{tx.promotionName}
-                          </span>
-                        )}
+              groupedSales.map((txGroup) => {
+                // Separate promo items (group by promotionId) from regular items
+                const promoMap = new Map<number, Transaction[]>();
+                const regularTxs: Transaction[] = [];
+                for (const tx of txGroup) {
+                  if (tx.promotionId) {
+                    if (!promoMap.has(tx.promotionId)) promoMap.set(tx.promotionId, []);
+                    promoMap.get(tx.promotionId)!.push(tx);
+                  } else {
+                    regularTxs.push(tx);
+                  }
+                }
+                const promoGroups = [...promoMap.values()];
+                const groupTotal = txGroup.reduce((sum, tx) => sum + tx.amount * tx.quantity, 0);
+                const groupKey = txGroup[0].saleGroupId || `_solo_${txGroup[0].id}`;
+                const mainStatus = txGroup[0].status;
+
+                return (
+                  <div key={groupKey} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+                    {/* Sale header */}
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Venta</p>
+                        <p className="text-xs text-slate-500">{formatDate(txGroup[0].createdAt)}</p>
                       </div>
-                      <p className="text-xs text-slate-500">
-                        {formatDate(tx.createdAt)}{tx.quantity > 1 ? ` · Cant: ${tx.quantity}` : ''}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="font-bold text-sm text-slate-900 dark:text-slate-100">${(tx.amount * tx.quantity).toFixed(2)}</p>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block ${tx.status === 'PAID' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
-                        tx.status === 'REFUNDED' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' :
+                      <div className="flex items-center gap-3">
+                        <p className="font-bold text-slate-900 dark:text-slate-100">
+                          ${groupTotal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          mainStatus === 'PAID' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
+                          mainStatus === 'REFUNDED' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' :
                           'text-slate-400 bg-slate-100 dark:bg-slate-800'}`}>
-                        {tx.status}
-                      </p>
+                          {mainStatus}
+                        </span>
+                      </div>
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                      <button onClick={() => openTxModal(tx)}
-                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Editar">
-                        <Pencil className="w-3.5 h-3.5 text-slate-400" />
-                      </button>
-                      <button onClick={() => openTxModal(tx, true)}
-                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Eliminar">
-                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                      </button>
+
+                    {/* Sale lines */}
+                    <div className="px-6 py-4 space-y-3">
+                      {/* Promo groups */}
+                      {promoGroups.map((promoTxs) => {
+                        const promoTotal = promoTxs.reduce((sum, tx) => sum + tx.amount * tx.quantity, 0);
+                        return (
+                          <div key={promoTxs[0].promotionId} className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <Tag className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                                <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                                  {promoTxs[0].promotionName}
+                                </span>
+                              </div>
+                              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                                ${promoTotal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                            {promoTxs.map(tx => (
+                              <div key={tx.id} className="flex items-center justify-between pl-5 group/item">
+                                <span className="text-xs text-slate-500">
+                                  {tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name} × {tx.quantity}
+                                </span>
+                                <div className="opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center gap-1">
+                                  <button onClick={() => openTxModal(tx)}
+                                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Editar">
+                                    <Pencil className="w-3 h-3 text-slate-400" />
+                                  </button>
+                                  <button onClick={() => openTxModal(tx, true)}
+                                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Eliminar">
+                                    <Trash2 className="w-3 h-3 text-red-400" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+
+                      {/* Regular items */}
+                      {regularTxs.map(tx => (
+                        <div key={tx.id} className="flex items-center justify-between group/item">
+                          <span className="text-sm text-slate-700 dark:text-slate-300">
+                            {tx.product.category ? `${tx.product.category} de ${tx.product.name}` : tx.product.name}
+                            {tx.quantity > 1 && <span className="text-slate-400"> × {tx.quantity}</span>}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              ${(tx.amount * tx.quantity).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            <div className="opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center gap-1">
+                              <button onClick={() => openTxModal(tx)}
+                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Editar">
+                                <Pencil className="w-3 h-3 text-slate-400" />
+                              </button>
+                              <button onClick={() => openTxModal(tx, true)}
+                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Eliminar">
+                                <Trash2 className="w-3 h-3 text-red-400" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
