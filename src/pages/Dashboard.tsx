@@ -36,7 +36,7 @@ interface DashboardData {
     status: string;
     date: string;
   }[];
-  lowStockProducts: {
+  lowStockProducts?: {
     id: number;
     name: string;
     stock: number;
@@ -147,7 +147,7 @@ export function Dashboard() {
       </section>
 
       {/* Low Stock Alert */}
-      {data.lowStockProducts.length > 0 && (
+      {(data.lowStockProducts || []).length > 0 && (
         <section className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -156,9 +156,9 @@ export function Dashboard() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                  {data.lowStockProducts.length === 1
+                  {(data.lowStockProducts || []).length === 1
                     ? '1 producto con stock bajo'
-                    : `${data.lowStockProducts.length} productos con stock bajo`}
+                    : `${(data.lowStockProducts || []).length} productos con stock bajo`}
                 </p>
                 <p className="text-xs text-amber-600 dark:text-amber-500">Stock igual o menor a 5 unidades</p>
               </div>
@@ -171,7 +171,7 @@ export function Dashboard() {
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {data.lowStockProducts.map(p => (
+            {(data.lowStockProducts || []).map(p => (
               <div key={p.id} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/50 rounded-xl px-3 py-2">
                 <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{p.name}</span>
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
