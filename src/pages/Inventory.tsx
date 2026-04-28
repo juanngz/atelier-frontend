@@ -4,10 +4,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  Plus,
   Filter,
   Loader2,
   X,
@@ -15,7 +13,8 @@ import {
   Package,
   Sparkles,
   Pencil,
-  Trash2
+  Trash2,
+  ArrowUpDown,
 } from 'lucide-react';
 import { authenticatedFetch } from '../utils/api';
 
@@ -57,10 +56,11 @@ export function Inventory() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categorySubmitting, setCategorySubmitting] = useState(false);
 
-  // Filters
+  // Filters & sort
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [filterStockLevel, setFilterStockLevel] = useState<string>('all'); // all, low, out
+  const [sortBy, setSortBy] = useState<'default' | 'stock_desc' | 'stock_asc' | 'name_asc'>('default');
 
   // Edit modal
   const [showEditModal, setShowEditModal] = useState(false);
@@ -207,35 +207,25 @@ export function Inventory() {
     setEditProduct(null);
   };
 
-  // Filter functions
+  // Filter + sort
   const getFilteredProducts = () => {
-    return products.filter(product => {
-      // Filter by category
-      if (filterCategory && product.category !== filterCategory) {
-        return false;
-      }
-
-      // Filter by stock level
-      if (filterStockLevel !== 'all') {
-        if (filterStockLevel === 'out' && product.stock > 0) {
-          return false;
-        }
-        if (filterStockLevel === 'low' && product.stock >= 5) {
-          return false;
-        }
-      }
-
+    const filtered = products.filter(product => {
+      if (filterCategory && product.category !== filterCategory) return false;
+      if (filterStockLevel === 'out' && product.stock > 0) return false;
+      if (filterStockLevel === 'low' && product.stock >= 5) return false;
       return true;
     });
+
+    if (sortBy === 'stock_desc') return [...filtered].sort((a, b) => b.stock - a.stock);
+    if (sortBy === 'stock_asc') return [...filtered].sort((a, b) => a.stock - b.stock);
+    if (sortBy === 'name_asc') return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+    return filtered;
   };
 
-  const openFilterModal = () => {
-    setShowFilterModal(true);
-  };
+  const activeFilterCount = (filterCategory ? 1 : 0) + (filterStockLevel !== 'all' ? 1 : 0);
 
-  const closeFilterModal = () => {
-    setShowFilterModal(false);
-  };
+  const openFilterModal = () => setShowFilterModal(true);
+  const closeFilterModal = () => setShowFilterModal(false);
 
   const clearFilters = () => {
     setFilterCategory('');
@@ -333,15 +323,81 @@ export function Inventory() {
         {products.length === 0 ? (
           <div className="text-center py-20">
             <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-400 text-sm">No products yet. Click "Add New Stock" to create your first product.</p>
+            <p className="text-slate-400 text-sm">Aún no hay productos. Hacé clic en "+ Producto" para crear el primero.</p>
           </div>
         ) : (
           <>
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              {/* Filtrar button */}
+              <button
+                onClick={openFilterModal}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95 shadow-sm border ${
+                  activeFilterCount > 0
+                    ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Filter className="w-4 h-4" />
+                Filtrar
+                {activeFilterCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-white/30 text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>
+                )}
+              </button>
+
+              {/* Ordenar por */}
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                  className={`appearance-none pl-9 pr-8 py-2.5 rounded-full text-sm font-semibold border transition-all cursor-pointer ${
+                    sortBy !== 'default'
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <option value="default">Ordenar por</option>
+                  <option value="stock_desc">Stock: mayor a menor</option>
+                  <option value="stock_asc">Stock: menor a mayor</option>
+                  <option value="name_asc">Nombre: A → Z</option>
+                </select>
+                <ArrowUpDown className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none w-3.5 h-3.5 ${sortBy !== 'default' ? 'text-white' : 'text-slate-400'}`} />
+                <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none w-3.5 h-3.5 ${sortBy !== 'default' ? 'text-white' : 'text-slate-400'}`} />
+              </div>
+
+              {/* Active filter chips */}
+              {filterCategory && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-xs font-semibold border border-blue-200 dark:border-blue-800">
+                  {filterCategory}
+                  <button onClick={() => setFilterCategory('')} className="hover:text-blue-900 dark:hover:text-blue-100 transition-colors"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+              {filterStockLevel !== 'all' && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 rounded-full text-xs font-semibold border border-amber-200 dark:border-amber-800">
+                  {filterStockLevel === 'low' ? 'Stock bajo' : 'Sin stock'}
+                  <button onClick={() => setFilterStockLevel('all')} className="hover:text-amber-900 dark:hover:text-amber-100 transition-colors"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+              {(activeFilterCount > 0 || sortBy !== 'default') && (
+                <button
+                  onClick={() => { clearFilters(); setSortBy('default'); }}
+                  className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition-colors"
+                >
+                  Limpiar todo
+                </button>
+              )}
+
+              {/* Count */}
+              <span className="ml-auto text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                {getFilteredProducts().length} de {products.length} productos
+              </span>
+            </div>
+
             <div className="grid grid-cols-12 px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800 mb-4">
-              <div className="col-span-5">Product Details</div>
-              <div className="col-span-2 text-center">Price</div>
+              <div className="col-span-5">Producto</div>
+              <div className="col-span-2 text-center">Precio</div>
               <div className="col-span-1 text-center">Stock</div>
-              <div className="col-span-4 text-right">Actions</div>
+              <div className="col-span-4 text-right">Acciones</div>
             </div>
             <div className="space-y-4">
               {getFilteredProducts().map((product) => (
@@ -354,7 +410,13 @@ export function Inventory() {
                   </div>
                   <div className="col-span-2 text-center text-sm font-semibold text-slate-900 dark:text-slate-100">${product.price.toFixed(2)}</div>
                   <div className="col-span-1 text-center">
-                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                    <span className={`px-3 py-1 rounded-full text-[11px] font-bold ${
+                      product.stock === 0
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        : product.stock < 5
+                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}>
                       {product.stock} {product.unidad}
                     </span>
                   </div>
@@ -380,29 +442,6 @@ export function Inventory() {
           </>
         )}
       </section>
-
-      {/* Footer */}
-      {products.length > 0 && (
-        <footer className="mt-12 flex justify-between items-center px-6">
-          <div>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-              Showing {getFilteredProducts().length} of {products.length} Products
-            </p>
-            {(filterCategory || filterStockLevel !== 'all') && (
-              <p className="text-[10px] text-slate-500 mt-1">
-                Filter: {filterCategory && `${filterCategory}`}{filterCategory && filterStockLevel !== 'all' && ' • '}{filterStockLevel === 'low' ? 'Low Stock' : filterStockLevel === 'out' ? 'Out of Stock' : ''}
-              </p>
-            )}
-          </div>
-        </footer>
-      )}
-
-      {/* Floating Filter */}
-      <div className="fixed bottom-10 right-10 flex flex-col gap-3 z-30">
-        <button onClick={openFilterModal} className="w-14 h-14 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-90 ring-1 ring-black/5">
-          <Filter className="w-6 h-6" />
-        </button>
-      </div>
 
       {/* ══════ ADD STOCK / CREATE PRODUCT MODAL ══════ */}
       {showModal && (
@@ -596,7 +635,7 @@ export function Inventory() {
                   <Filter className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Filter Products</h3>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Filtrar productos</h3>
                   <p className="text-xs text-slate-400">{today}</p>
                 </div>
               </div>
@@ -607,14 +646,14 @@ export function Inventory() {
             <div className="px-8 pb-8 space-y-5">
               {/* Filter by Category */}
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Category</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Categoría</label>
                 <div className="relative">
                   <select 
                     className={`${inputClass} appearance-none`} 
                     value={filterCategory} 
                     onChange={e => setFilterCategory(e.target.value)}
                   >
-                    <option value="">All Categories</option>
+                    <option value="">Todas las categorías</option>
                     {categories.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
@@ -625,7 +664,7 @@ export function Inventory() {
 
               {/* Filter by Stock Level */}
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Stock Level</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Nivel de stock</label>
                 <div className="space-y-2">
                   <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors">
                     <input 
@@ -636,7 +675,7 @@ export function Inventory() {
                       onChange={e => setFilterStockLevel(e.target.value)}
                       className="w-4 h-4 text-blue-600"
                     />
-                    <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">All Products</span>
+                    <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">Todos los productos</span>
                   </label>
                   <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors">
                     <input 
@@ -647,7 +686,7 @@ export function Inventory() {
                       onChange={e => setFilterStockLevel(e.target.value)}
                       className="w-4 h-4 text-amber-600"
                     />
-                    <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">Low Stock (0-4 units)</span>
+                    <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">Stock bajo (0–4 unidades)</span>
                   </label>
                   <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors">
                     <input 
@@ -658,7 +697,7 @@ export function Inventory() {
                       onChange={e => setFilterStockLevel(e.target.value)}
                       className="w-4 h-4 text-red-600"
                     />
-                    <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">Out of Stock</span>
+                    <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">Sin stock</span>
                   </label>
                 </div>
               </div>
@@ -666,7 +705,7 @@ export function Inventory() {
               {/* Active Filters Display */}
               {(filterCategory || filterStockLevel !== 'all') && (
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
-                  <p className="text-xs font-semibold text-blue-600 mb-2">Active Filters:</p>
+                  <p className="text-xs font-semibold text-blue-600 mb-2">Filtros activos:</p>
                   <div className="flex flex-wrap gap-2">
                     {filterCategory && (
                       <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
@@ -675,7 +714,7 @@ export function Inventory() {
                     )}
                     {filterStockLevel !== 'all' && (
                       <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
-                        {filterStockLevel === 'low' ? 'Low Stock' : 'Out of Stock'}
+                        {filterStockLevel === 'low' ? 'Stock bajo' : 'Sin stock'}
                       </span>
                     )}
                   </div>
@@ -684,17 +723,17 @@ export function Inventory() {
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
-                <button 
+                <button
                   onClick={clearFilters}
                   className="flex-1 px-4 py-3 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-full text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95"
                 >
-                  Clear All
+                  Limpiar
                 </button>
-                <button 
+                <button
                   onClick={closeFilterModal}
                   className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-full text-sm font-semibold hover:bg-blue-700 transition-all active:scale-95 shadow-xl shadow-blue-500/10"
                 >
-                  Done
+                  Aplicar
                 </button>
               </div>
             </div>
@@ -737,7 +776,7 @@ export function Inventory() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Category</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Categoría</label>
                 <div className="relative">
                   <select className={`${inputClass} appearance-none`} value={editCategory} onChange={e => setEditCategory(e.target.value)}>
                     <option value="">Select a category...</option>
