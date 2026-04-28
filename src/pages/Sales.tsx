@@ -361,8 +361,6 @@ export function Sales() {
   );
 
   const resolvedTotal = resolvedCart.reduce((sum, line) => sum + line.total, 0);
-  const regularTotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  const totalSaving = regularTotal - resolvedTotal;
   const hasPromos = resolvedCart.some(l => l.type === 'promo');
 
   // Group transactions by saleGroupId for the history display
@@ -656,11 +654,6 @@ export function Sales() {
                           ${resolvedTotal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
-                      {totalSaving > 0.01 && (
-                        <p className="text-[11px] text-emerald-600 text-right mt-0.5 font-medium">
-                          Ahorro: ${totalSaving.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
