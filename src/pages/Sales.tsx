@@ -458,8 +458,9 @@ export function Sales() {
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('es-AR', {
+    return new Date(dateStr).toLocaleString('es-AR', {
       month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
     });
   };
 
@@ -718,7 +719,6 @@ export function Sales() {
                     {/* Sale header */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
                       <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Venta</p>
                         <p className="text-xs text-slate-500">{formatDate(txGroup[0].createdAt)}</p>
                       </div>
                       <div className="flex items-center gap-3">

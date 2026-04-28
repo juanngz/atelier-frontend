@@ -11,7 +11,8 @@ import {
   Plus,
   ShoppingCart,
   Package2,
-  AlertTriangle
+  AlertTriangle,
+  Tag,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -29,13 +30,6 @@ interface DashboardData {
   todayTxCount: number;
   totalProducts: number;
   chartData: { day: string; revenue: number }[];
-  recentTransactions: {
-    id: number;
-    productName: string;
-    amount: number;
-    status: string;
-    date: string;
-  }[];
   lowStockProducts?: {
     id: number;
     name: string;
@@ -45,8 +39,17 @@ interface DashboardData {
   }[];
 }
 
+interface Promotion {
+  id: number;
+  name: string;
+  promoPrice: number;
+  isActive: boolean;
+  items: { id: number }[];
+}
+
 export function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -59,12 +62,16 @@ export function Dashboard() {
       return;
     }
 
-    authenticatedFetch('/api/dashboard')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch dashboard');
-        return res.json();
+    Promise.all([
+      authenticatedFetch('/api/dashboard'),
+      authenticatedFetch('/api/promotions'),
+    ])
+      .then(async ([dashRes, promoRes]) => {
+        if (!dashRes.ok) throw new Error('Failed to fetch dashboard');
+        const [dashData, promoData] = await Promise.all([dashRes.json(), promoRes.json()]);
+        setData(dashData);
+        if (Array.isArray(promoData)) setPromotions(promoData);
       })
-      .then(setData)
       .catch((err: any) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -91,10 +98,8 @@ export function Dashboard() {
     );
   }
 
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('es-AR', { month: 'short', day: 'numeric' });
-
   const maxRevenue = Math.max(...data.chartData.map(d => d.revenue), 1);
+  const activePromotions = promotions.filter(p => p.isActive);
 
   return (
     <div className="space-y-8">
@@ -146,44 +151,88 @@ export function Dashboard() {
         </button>
       </section>
 
-      {/* Low Stock Alert */}
-      {(data.lowStockProducts || []).length > 0 && (
-        <section className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+      {/* Alerts row */}
+      {((data.lowStockProducts || []).length > 0 || activePromotions.length > 0) && (
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          {/* Low Stock Alert */}
+          {(data.lowStockProducts || []).length > 0 && (
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                      {(data.lowStockProducts || []).length === 1
+                        ? '1 producto con stock bajo'
+                        : `${(data.lowStockProducts || []).length} productos con stock bajo`}
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-500">Stock igual o menor a 5 unidades</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate('/inventory')}
+                  className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
+                >
+                  Ver inventario →
+                </button>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                  {(data.lowStockProducts || []).length === 1
-                    ? '1 producto con stock bajo'
-                    : `${(data.lowStockProducts || []).length} productos con stock bajo`}
-                </p>
-                <p className="text-xs text-amber-600 dark:text-amber-500">Stock igual o menor a 5 unidades</p>
+              <div className="flex flex-wrap gap-2">
+                {(data.lowStockProducts || []).map(p => (
+                  <div key={p.id} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/50 rounded-xl px-3 py-2">
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{p.name}</span>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      p.stock === 0
+                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                    }`}>
+                      {p.stock === 0 ? 'Sin stock' : `${p.stock} ${p.unidad}`}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-            <button
-              onClick={() => navigate('/inventory')}
-              className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
-            >
-              Ver inventario →
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {(data.lowStockProducts || []).map(p => (
-              <div key={p.id} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/50 rounded-xl px-3 py-2">
-                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{p.name}</span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  p.stock === 0
-                    ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                }`}>
-                  {p.stock === 0 ? 'Sin stock' : `${p.stock} ${p.unidad}`}
-                </span>
+          )}
+
+          {/* Active Promotions Alert */}
+          {activePromotions.length > 0 && (
+            <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                    <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                      {activePromotions.length === 1
+                        ? '1 promoción activa'
+                        : `${activePromotions.length} promociones activas`}
+                    </p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-500">Se aplican automáticamente al vender</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate('/promotions')}
+                  className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline"
+                >
+                  Ver promociones →
+                </button>
               </div>
-            ))}
-          </div>
+              <div className="flex flex-wrap gap-2">
+                {activePromotions.map(p => (
+                  <div key={p.id} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/50 rounded-xl px-3 py-2">
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{p.name}</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                      ${p.promoPrice.toLocaleString('es-AR')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </section>
       )}
 
@@ -260,43 +309,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Transactions */}
-      <section>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-medium tracking-tight text-slate-900 dark:text-slate-100">Transacciones Recientes</h3>
-        </div>
-        {data.recentTransactions.length === 0 ? (
-          <p className="text-sm text-slate-400 py-8 text-center">Aún no hay transacciones</p>
-        ) : (
-          <div className="space-y-1">
-            <div className="grid grid-cols-12 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              <div className="col-span-6">Producto</div>
-              <div className="col-span-4 text-center">Estado</div>
-              <div className="col-span-2 text-right">Monto</div>
-            </div>
-            {data.recentTransactions.map((tx) => (
-              <div key={tx.id} className="grid grid-cols-12 items-center px-6 py-5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                <div className="col-span-6 flex items-center gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{tx.productName}</p>
-                    <p className="text-[10px] text-slate-400">{formatDate(tx.date)}</p>
-                  </div>
-                </div>
-                <div className="col-span-4 flex justify-center">
-                  <span className={`px-3 py-1 text-[10px] font-bold rounded-full ${
-                    tx.status === 'PAID' ? 'bg-green-50 text-green-600 dark:bg-green-900/20' :
-                    tx.status === 'REFUNDED' ? 'bg-orange-50 text-orange-600 dark:bg-orange-900/20' :
-                    'bg-slate-100 text-slate-500'
-                  }`}>
-                    {tx.status}
-                  </span>
-                </div>
-                <div className="col-span-2 text-right text-sm font-bold text-slate-900 dark:text-slate-100">${tx.amount.toFixed(2)}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
 }
